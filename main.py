@@ -42,8 +42,8 @@ def main():
     print(f"---\n{content}---")
     
     # Añadir más contenido al final
-    print("\nTrabajo Sistemas Operativos\n")
-    texto_adicional = "\nEsta línea se agrega al final del archivo existente.\n"
+    print("\nAñadir Algo al .txt\n")
+    texto_adicional = "\nHello World\n"
     # Mover posición al final
     cow.open_files[filename]["position"] = len(texto.encode())
     bytes_written = cow.write(filename, texto_adicional.encode())

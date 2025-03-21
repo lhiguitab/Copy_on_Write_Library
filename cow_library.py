@@ -4,20 +4,9 @@ import uuid
 from datetime import datetime
 from typing import Dict, List
 
-class COWFileSystem:
-    """
-    Una librería que implementa mecanismos de Copy-on-Write para gestionar
-    las escrituras de archivos.
-    """
+class COWFileSystem: # Librería de Copy-On-Write
     
-    def __init__(self, base_dir: str = None):
-        """
-        Inicializa el sistema de archivos COW.
-        
-        Args:
-            base_dir: Directorio base donde se almacenarán los archivos y sus versiones.
-                     Si no se proporciona, se creará uno en el directorio actual.
-        """
+    def __init__(self, base_dir: str = None): # Constructor
         if base_dir is None:
             self.base_dir = os.path.join(os.getcwd(), "cow_filesystem")
         else:
@@ -37,35 +26,29 @@ class COWFileSystem:
         # Tamaño del bloque para fragmentar archivos (4KB por defecto)
         self.block_size = 4 * 1024
         
-    def _get_metadata_path(self, filename: str) -> str:
-        """Obtiene la ruta del archivo de metadatos para un archivo dado."""
+    def _get_metadata_path(self, filename: str) -> str: # Obtiene la ruta del archivo de metadatos para un archivo dado
         sanitized_name = self._sanitize_filename(filename)
         return os.path.join(self.metadata_dir, f"{sanitized_name}.meta.json")
     
-    def _get_block_path(self, block_id: str) -> str:
-        """Obtiene la ruta de un bloque de datos."""
+    def _get_block_path(self, block_id: str) -> str: # Obtiene la ruta de un bloque de datos
         return os.path.join(self.data_dir, f"{block_id}.block")
     
     def _sanitize_filename(self, filename: str) -> str:
-        """Sanitiza el nombre del archivo para uso en rutas."""
         # Reemplazar caracteres problemáticos con guiones bajos
         sanitized = os.path.basename(filename).replace('/', '_').replace('\\', '_')
         return sanitized
     
-    def _generate_block_id(self) -> str:
-        """Genera un ID único para un bloque de datos."""
+    def _generate_block_id(self) -> str: # Genera un ID único para un bloque de datos
         return str(uuid.uuid4())
     
-    def _load_metadata(self, filename: str) -> Dict:
-        """Carga los metadatos de un archivo."""
+    def _load_metadata(self, filename: str) -> Dict: # Carga los metadatos de un archivo
         metadata_path = self._get_metadata_path(filename)
         if os.path.exists(metadata_path):
             with open(metadata_path, 'r') as f:
                 return json.load(f)
         return None
     
-    def _save_metadata(self, filename: str, metadata: Dict) -> None:
-        """Guarda los metadatos de un archivo."""
+    def _save_metadata(self, filename: str, metadata: Dict) -> None: # Guarda los metadatos de un archivo
         metadata_path = self._get_metadata_path(filename)
         # Asegurar que el directorio existe
         os.makedirs(os.path.dirname(metadata_path), exist_ok=True)
@@ -73,8 +56,7 @@ class COWFileSystem:
         with open(metadata_path, 'w') as f:
             json.dump(metadata, f, indent=2)
     
-    def _create_empty_metadata(self, filename: str) -> Dict:
-        """Crea metadatos vacíos para un nuevo archivo."""
+    def _create_empty_metadata(self, filename: str) -> Dict: # Crea metadatos vacíos para un archivo
         return {
             "filename": filename,
             "creation_time": datetime.now().isoformat(),
@@ -83,13 +65,7 @@ class COWFileSystem:
             "size": 0
         }
     
-    def _create_new_version(self, metadata: Dict, blocks: List[str], size: int) -> int:
-        """
-        Crea una nueva versión en los metadatos.
-        
-        Returns:
-            El número de la nueva versión.
-        """
+    def _create_new_version(self, metadata: Dict, blocks: List[str], size: int) -> int: # Crea una nueva versión en los metadatos para las modificaciones realizadas
         new_version = {
             "version": len(metadata["versions"]),
             "timestamp": datetime.now().isoformat(),
@@ -103,16 +79,7 @@ class COWFileSystem:
         
         return new_version["version"]
     
-    def _write_block(self, data: bytes) -> str:
-        """
-        Escribe un bloque de datos y devuelve su ID.
-        
-        Args:
-            data: Los datos a escribir.
-            
-        Returns:
-            El ID del bloque creado.
-        """
+    def _write_block(self, data: bytes) -> str: # Escribe un bloque de datos y devuelve su ID
         block_id = self._generate_block_id()
         block_path = self._get_block_path(block_id)
         
@@ -124,31 +91,13 @@ class COWFileSystem:
             
         return block_id
     
-    def _read_block(self, block_id: str) -> bytes:
-        """
-        Lee un bloque de datos.
-        
-        Args:
-            block_id: El ID del bloque a leer.
-            
-        Returns:
-            Los datos del bloque.
-        """
+    def _read_block(self, block_id: str) -> bytes: # Lee un bloque de datos
         block_path = self._get_block_path(block_id)
         
         with open(block_path, 'rb') as f:
             return f.read()
     
-    def create(self, filename: str) -> bool:
-        """
-        Crea un nuevo archivo vacío.
-        
-        Args:
-            filename: El nombre del archivo a crear.
-            
-        Returns:
-            True si se creó correctamente, False si ya existía.
-        """
+    def create(self, filename: str) -> bool: # Crea un nuevo archivo vacío
         metadata = self._load_metadata(filename)
         
         if metadata is not None:
@@ -166,16 +115,7 @@ class COWFileSystem:
         
         return True
     
-    def open(self, filename: str) -> bool:
-        """
-        Abre un archivo existente.
-        
-        Args:
-            filename: El nombre del archivo a abrir.
-            
-        Returns:
-            True si se abrió correctamente, False si no existe.
-        """
+    def open(self, filename: str) -> bool: # Abre un archivo existente
         metadata = self._load_metadata(filename)
         
         if metadata is None:
@@ -190,17 +130,7 @@ class COWFileSystem:
         
         return True
     
-    def read(self, filename: str, size: int = -1) -> bytes:
-        """
-        Lee datos desde la última versión del archivo.
-        
-        Args:
-            filename: El nombre del archivo a leer.
-            size: La cantidad de bytes a leer. -1 para leer todo.
-            
-        Returns:
-            Los datos leídos o bytes vacíos si hay un error.
-        """
+    def read(self, filename: str, size: int = -1) -> bytes: # Lee datos desde la última versión del archivo
         if filename not in self.open_files:
             return b''
         
@@ -256,17 +186,7 @@ class COWFileSystem:
         
         return data
     
-    def write(self, filename: str, data: bytes) -> int:
-        """
-        Escribe datos en el archivo, creando una nueva versión.
-        
-        Args:
-            filename: El nombre del archivo a escribir.
-            data: Los datos a escribir.
-            
-        Returns:
-            La cantidad de bytes escritos o -1 si hay un error.
-        """
+    def write(self, filename: str, data: bytes) -> int: # Escribe datos en el archivo, creando una nueva versión
         if filename not in self.open_files:
             return -1
         
@@ -352,16 +272,7 @@ class COWFileSystem:
         
         return data_written
     
-    def close(self, filename: str) -> bool:
-        """
-        Cierra un archivo.
-        
-        Args:
-            filename: El nombre del archivo a cerrar.
-            
-        Returns:
-            True si se cerró correctamente, False si no estaba abierto.
-        """
+    def close(self, filename: str) -> bool: # Cierra un archivo
         if filename not in self.open_files:
             return False
         
