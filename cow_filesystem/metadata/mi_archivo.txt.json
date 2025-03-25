@@ -1,0 +1,68 @@
+{
+  "filename": "mi_archivo.txt",
+  "creation_time": "2025-03-25T11:49:08.987808",
+  "versions": [
+    {
+      "version": 0,
+      "timestamp": "2025-03-25T11:49:18.314135",
+      "blocks": [
+        "20a5d4dc-ce19-46a9-933d-0895cd64b574"
+      ],
+      "size": 11
+    },
+    {
+      "version": 1,
+      "timestamp": "2025-03-25T11:49:24.630789",
+      "blocks": [
+        "c0234609-fb52-4d02-bb95-362bad76dadc"
+      ],
+      "size": 27
+    },
+    {
+      "version": 2,
+      "timestamp": "2025-03-25T11:49:37.752278",
+      "blocks": [
+        "4bbde338-41ea-4b94-907f-ddcf5484fa13"
+      ],
+      "size": 61
+    },
+    {
+      "version": 3,
+      "timestamp": "2025-03-25T11:54:23.959536",
+      "blocks": [
+        "4bbde338-41ea-4b94-907f-ddcf5484fa13",
+        "b258328b-29ab-4676-a0ac-2f72fef0478e"
+      ],
+      "size": 61
+    },
+    {
+      "version": 4,
+      "timestamp": "2025-03-25T11:54:39.453269",
+      "blocks": [
+        "4bbde338-41ea-4b94-907f-ddcf5484fa13",
+        "b258328b-29ab-4676-a0ac-2f72fef0478e",
+        "ab4b2db3-f3e0-49d1-bace-5c7e8da793e7"
+      ],
+      "size": 85
+    },
+    {
+      "version": 5,
+      "timestamp": "2025-03-25T11:57:33.065715",
+      "blocks": [
+        "4bbde338-41ea-4b94-907f-ddcf5484fa13",
+        "b258328b-29ab-4676-a0ac-2f72fef0478e",
+        "ab4b2db3-f3e0-49d1-bace-5c7e8da793e7",
+        "f599ede2-0c1d-430d-a26a-831a5f3c149e"
+      ],
+      "size": 85
+    }
+  ],
+  "current_version": 5,
+  "size": 85,
+  "blocks": [
+    "4bbde338-41ea-4b94-907f-ddcf5484fa13",
+    "b258328b-29ab-4676-a0ac-2f72fef0478e",
+    "ab4b2db3-f3e0-49d1-bace-5c7e8da793e7",
+    "f599ede2-0c1d-430d-a26a-831a5f3c149e"
+  ]
+}

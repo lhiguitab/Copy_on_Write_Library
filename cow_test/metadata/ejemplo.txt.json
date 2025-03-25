@@ -1,0 +1,16 @@
+{
+  "filename": "ejemplo.txt",
+  "creation_time": "2025-03-25T10:20:46.727329",
+  "versions": [
+    {
+      "version": 0,
+      "timestamp": "2025-03-25T10:20:46.729254",
+      "blocks": [
+        "714b9e88-5461-4d4f-b981-df67ee82c9f4"
+      ],
+      "size": 11
+    }
+  ],
+  "current_version": 0,
+  "size": 11
+}
