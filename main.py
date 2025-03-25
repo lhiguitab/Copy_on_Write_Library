@@ -1,7 +1,7 @@
-from cow_library import COWFileSystem
+from cow_library import COWFS
 
 def main():
-    cow = COWFileSystem()  # Inicializar el sistema de archivos
+    cow = COWFS()  # Inicializar el sistema de archivos
     filename = "mi_archivo.txt"
 
     # 1️⃣ Crear el archivo si no existe
