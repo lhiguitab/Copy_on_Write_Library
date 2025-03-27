@@ -2,7 +2,18 @@ from cow_library import COWFS
 import shutil
 import os
 
-def eliminar_bloques(cow):
+def  get_block_size(cow, block_id):
+    """Obtiene el tamaño de un bloque específico."""
+    block_path = os.path.join(cow.data_dir, f"{block_id}.block")
+    if os.path.exists(block_path):
+        size = os.path.getsize(block_path)
+        print(f"✅ Block '{block_id}' Size: {size} bytes")
+        return size
+    else:
+        print(f"⚠️ El bloque '{block_id}' no existe.")
+        return None
+
+def delete_blocks(cow):
     """Elimina todos los bloques almacenados en el sistema."""
     if os.path.exists(cow.data_dir):
         shutil.rmtree(cow.data_dir)  # Elimina el directorio 'data' y su contenido
@@ -11,7 +22,7 @@ def eliminar_bloques(cow):
     else:
         print("⚠️ No se encontró el directorio de bloques.")
 
-def eliminar_metadatos(cow):
+def delete_metadata(cow):
     """Elimina todos los metadatos almacenados en el sistema."""
     if os.path.exists(cow.metadata_dir):
         shutil.rmtree(cow.metadata_dir)  # Elimina el directorio 'metadata' y su contenido
@@ -20,14 +31,17 @@ def eliminar_metadatos(cow):
     else:
         print("⚠️ No se encontró el directorio de metadatos.")
 
+        
+
 def main():
 
     cow = COWFS()  # Inicializar el sistema de archivos
-    #eliminar_bloques(cow) Eliminar bloques existentes
-    # eliminar_metadatos(cow) Eliminar metadatos existentes
-    
-    filename = "mi_archivo.txt"
 
+    #delete_blocks(cow) Eliminar bloques existentes
+    #delete_metadata(cow) Eliminar metadatos existentes
+
+    filename = "mi_archivo.txt"
+    
     # 1️⃣ Crear el archivo si no existe
     if cow.create(filename):
         print(f"Archivo '{filename}' creado exitosamente.")
@@ -53,9 +67,17 @@ def main():
     cow.open(filename)  # Reabrir antes de leer
     contenido = cow.read(filename)
     print(f"\n📂 Contenido actual del archivo:\n{contenido.decode()}")
+
     # Listar los bloques almacenados
     print("\n📦 Bloques almacenados en el sistema:")
-    print(cow.list_blocks())
+
+    blocks = cow.list_blocks()
+
+    for block in blocks:
+        block_id = block.split(".")[0]  # Obtener el ID del bloque sin la extensión
+        get_block_size(cow, block_id)  # Obtener el tamaño del bloque
+        
+
 
    # print("\n📜 Versiones del metadata':")
    # print(cow.list_versions(filename))
@@ -63,6 +85,7 @@ def main():
     # 5️⃣ Cerrar el archivo
     cow.close(filename)
     print(f"Archivo '{filename}' cerrado.")
+    
 
 if __name__ == "__main__":
     main()
