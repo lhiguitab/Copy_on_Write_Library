@@ -148,12 +148,31 @@ class COWFS: # Librería de Copy-On-Write
         new_size = max(position + len(data), current_version["size"])
         new_blocks = list(current_version["blocks"])
         
+        # Si hay un bloque parcial, completarlo primero
+        if new_blocks:
+            last_block_id = new_blocks[-1]
+            last_block_data = self._read_block(last_block_id)
+            
+            if len(last_block_data) < self.block_size:
+                remaining_space = self.block_size - len(last_block_data)
+                to_write = data[:remaining_space]
+                updated_block_data = last_block_data + to_write
+                
+                # Sobrescribir el bloque con los datos actualizados
+                block_path = os.path.join(self.data_dir, f"{last_block_id}.block")
+                with open(block_path, 'wb') as f:
+                    f.write(updated_block_data)
+                
+                data = data[remaining_space:]
+        
+        # Escribir los datos restantes en nuevos bloques
         while data:
             write_size = min(len(data), self.block_size)
             block_id = self._write_block(data[:write_size])
             new_blocks.append(block_id)
             data = data[write_size:]
         
+        # Actualizar metadatos del archivo
         metadata["versions"].append({
             "version": len(metadata["versions"]),
             "timestamp": datetime.now().isoformat(),
