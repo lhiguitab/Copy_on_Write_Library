@@ -85,6 +85,7 @@ def main():
    #delete_metadata(cow) Eliminar metadatos existentes
 
     filename = "mi_archivo.txt"
+    '''
     version = 3
     contenido_version = obtener_contenido_version(cow, filename, version)
     
@@ -93,7 +94,7 @@ def main():
     else:
          print(f"⚠️ No se pudo obtener el contenido de la versión {version}.")
 
-'''
+ '''
     # 1️⃣ Crear el archivo si no existe
     if cow.create(filename):
         print(f"Archivo '{filename}' creado exitosamente.")
@@ -147,7 +148,7 @@ def main():
     else:
         print("Error al exportar el archivo.")
 
-    '''
+    
 
 if __name__ == "__main__":
     main()

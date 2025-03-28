@@ -86,6 +86,43 @@ class COWFS: # Librería de Copy-On-Write
         
         return metadata.get("versions", [])
     
+    def export_to_txt(self, filename: str, output_path: str) -> bool:
+        """Exporta el contenido completo de un archivo a un archivo de texto plano."""
+        metadata_path = os.path.join(self.metadata_dir, f"{filename}.json")
+        
+        # Verificar si el archivo de metadatos existe
+        if not os.path.exists(metadata_path):
+            print(f"⚠️ No se encontraron metadatos para el archivo '{filename}'.")
+            return False
+
+        # Leer los metadatos
+        with open(metadata_path, 'r') as f:
+            metadata = json.load(f)
+
+        # Obtener los bloques actuales del archivo
+        blocks = metadata["blocks"]
+
+        # Reconstruir el contenido completo del archivo
+        content = b""
+        for block_id in blocks:
+            block_path = os.path.join(self.data_dir, f"{block_id}.block")
+            if os.path.exists(block_path):
+                with open(block_path, 'rb') as block_file:
+                    content += block_file.read()
+            else:
+                print(f"⚠️ El bloque '{block_id}' no existe.")
+                return False
+
+        # Escribir el contenido en el archivo de salida
+        try:
+            with open(output_path, 'w', encoding='utf-8') as output_file:
+                output_file.write(content.decode())
+            print(f"✅ Archivo exportado correctamente a '{output_path}'.")
+            return True
+        except Exception as e:
+            print(f"⚠️ Error al exportar el archivo: {e}")
+            return False
+    
     def create(self, filename: str) -> bool: # Crea un nuevo archivo vacío
         metadata_path = os.path.join(self.metadata_dir, f"{filename}.json")
         os.makedirs(self.metadata_dir, exist_ok=True)
