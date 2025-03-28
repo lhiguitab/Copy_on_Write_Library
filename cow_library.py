@@ -134,60 +134,66 @@ class COWFS: # Librería de Copy-On-Write
     def write(self, filename: str, data: bytes) -> int:
         if filename not in self.open_files:
             return -1
-        
+
         file_info = self.open_files[filename]
         metadata = file_info["metadata"]
         position = file_info["position"]
-        
+
         current_version_idx = metadata["current_version"]
         if current_version_idx < 0:
             current_version = {"blocks": [], "size": 0}
         else:
             current_version = metadata["versions"][current_version_idx]
-        
+
         new_size = max(position + len(data), current_version["size"])
         new_blocks = list(current_version["blocks"])
-        
+
         # Si hay un bloque parcial, completarlo primero
         if new_blocks:
             last_block_id = new_blocks[-1]
             last_block_data = self._read_block(last_block_id)
-            
+
             if len(last_block_data) < self.block_size:
                 remaining_space = self.block_size - len(last_block_data)
                 to_write = data[:remaining_space]
                 updated_block_data = last_block_data + to_write
-                
+
                 # Sobrescribir el bloque con los datos actualizados
                 block_path = os.path.join(self.data_dir, f"{last_block_id}.block")
                 with open(block_path, 'wb') as f:
                     f.write(updated_block_data)
-                
+
                 data = data[remaining_space:]
-        
+
         # Escribir los datos restantes en nuevos bloques
         while data:
             write_size = min(len(data), self.block_size)
             block_id = self._write_block(data[:write_size])
             new_blocks.append(block_id)
             data = data[write_size:]
-        
+
+        # Calcular el rango de bytes para la nueva versión
+        start = current_version["size"]
+        end = new_size
+
         # Actualizar metadatos del archivo
         metadata["versions"].append({
             "version": len(metadata["versions"]),
             "timestamp": datetime.now().isoformat(),
             "blocks": new_blocks,
+            "start": start,
+            "end": end,
             "size": new_size
         })
         metadata["current_version"] = len(metadata["versions"]) - 1
         metadata["size"] = new_size
         metadata["blocks"] = new_blocks
-        
+
         with open(os.path.join(self.metadata_dir, f"{filename}.json"), 'w') as f:
             json.dump(metadata, f, indent=2)
-        
+
         file_info["position"] = new_size
-        
+
         return len(data)
     
     def undo(self, filename: str) -> bool:
@@ -207,21 +213,3 @@ class COWFS: # Librería de Copy-On-Write
             json.dump(metadata, f, indent=2)
         
         return True
-    
-    def export_to_txt(self, filename: str, output_path: str) -> bool:
-        """Exporta el contenido de un archivo del sistema COWFS a un archivo .txt en el sistema operativo."""
-        try:
-            content = self.read(filename).decode('utf-8')
-            
-            with open(output_path, 'w', encoding='utf-8') as f:
-                f.write(content)
-            
-            print(f"El archivo '{filename}' se exportó correctamente a '{output_path}'.")
-            return True
-        except FileNotFoundError:
-            print(f"El archivo '{filename}' no existe en el sistema COWFS.")
-            return False
-        except Exception as e:
-            print(f"Error al exportar el archivo '{filename}': {e}")
-            return False
-
