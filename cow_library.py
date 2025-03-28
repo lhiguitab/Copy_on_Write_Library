@@ -207,3 +207,21 @@ class COWFS: # Librería de Copy-On-Write
             json.dump(metadata, f, indent=2)
         
         return True
+    
+    def export_to_txt(self, filename: str, output_path: str) -> bool:
+        """Exporta el contenido de un archivo del sistema COWFS a un archivo .txt en el sistema operativo."""
+        try:
+            content = self.read(filename).decode('utf-8')
+            
+            with open(output_path, 'w', encoding='utf-8') as f:
+                f.write(content)
+            
+            print(f"El archivo '{filename}' se exportó correctamente a '{output_path}'.")
+            return True
+        except FileNotFoundError:
+            print(f"El archivo '{filename}' no existe en el sistema COWFS.")
+            return False
+        except Exception as e:
+            print(f"Error al exportar el archivo '{filename}': {e}")
+            return False
+

@@ -60,7 +60,7 @@ def main():
         texto = input("Escribe algo (o escribe 'salir' para terminar): ")
         if texto.lower() == "salir":
             break
-        cow.write(filename, texto.encode())
+        cow.write(filename, (texto + " ").encode())  
         print(f"Texto guardado en '{filename}'.")
 
     # 4️⃣ Leer el contenido del archivo
@@ -85,6 +85,16 @@ def main():
     # 5️⃣ Cerrar el archivo
     cow.close(filename)
     print(f"Archivo '{filename}' cerrado.")
+
+    # Ruta relativa donde se guardará el archivo .txt exportado
+    output_path = os.path.join(os.getcwd(), "mi_archivo_exportado.txt")
+
+    # Exportar el archivo a un archivo .txt
+    if cow.export_to_txt(filename, output_path):
+        print(f"Archivo exportado correctamente en: {output_path}")
+    else:
+        print("Error al exportar el archivo.")
+
     
 
 if __name__ == "__main__":
