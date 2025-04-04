@@ -3,6 +3,7 @@ import json
 import uuid
 from datetime import datetime
 from typing import Dict, List
+import shutil
 
 class COWFS: # Librería de Copy-On-Write
     
@@ -224,4 +225,41 @@ class COWFS: # Librería de Copy-On-Write
         except Exception as e:
             print(f"Error al exportar el archivo '{filename}': {e}")
             return False
+
+    def get_block_size(self, block_id: str) -> int:
+        """
+        Obtiene el tamaño de un bloque específico.
+        :param block_id: ID del bloque.
+        :return: Tamaño del bloque en bytes, o None si no existe.
+        """
+        block_path = os.path.join(self.data_dir, f"{block_id}.block")
+        if os.path.exists(block_path):
+            size = os.path.getsize(block_path)
+            print(f"✅ Block '{block_id}' Size: {size} bytes")
+            return size
+        else:
+            print(f"⚠️ El bloque '{block_id}' no existe.")
+            return None
+
+    def delete_blocks(self):
+        """
+        Elimina todos los bloques almacenados en el sistema.
+        """
+        if os.path.exists(self.data_dir):
+            shutil.rmtree(self.data_dir)  # Elimina el directorio 'data' y su contenido
+            os.makedirs(self.data_dir, exist_ok=True)  # Recrea el directorio vacío
+            print("✅ Todos los bloques han sido eliminados.")
+        else:
+            print("⚠️ No se encontró el directorio de bloques.")
+
+    def delete_metadata(self):
+        """
+        Elimina todos los metadatos almacenados en el sistema.
+        """
+        if os.path.exists(self.metadata_dir):
+            shutil.rmtree(self.metadata_dir)  # Elimina el directorio 'metadata' y su contenido
+            os.makedirs(self.metadata_dir, exist_ok=True)  # Recrea el directorio vacío
+            print("✅ Todos los metadatos han sido eliminados.")
+        else:
+            print("⚠️ No se encontró el directorio de metadatos.")
 
