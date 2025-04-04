@@ -5,9 +5,9 @@ from datetime import datetime
 from typing import Dict, List
 import shutil
 
-class COWFS: # Librería de Copy-On-Write
+class COWFS:  # Librería de Copy-On-Write
     
-    def __init__(self, base_dir: str = None): # Constructor
+    def __init__(self, base_dir: str = None):  # Constructor
         if base_dir is None:
             self.base_dir = os.path.join(os.getcwd(), "cow_filesystem")
         else:
@@ -27,7 +27,7 @@ class COWFS: # Librería de Copy-On-Write
         # Tamaño del bloque para fragmentar archivos (4KB por defecto)
         self.block_size = 4 * 1024
     
-    def _write_block(self, data: bytes) -> str: # Escribe un bloque de datos y devuelve su ID
+    def _write_block(self, data: bytes) -> str:  # Escribe un bloque de datos y devuelve su ID
         block_id = str(uuid.uuid4())
         block_path = os.path.join(self.data_dir, f"{block_id}.block")
         
@@ -36,7 +36,7 @@ class COWFS: # Librería de Copy-On-Write
         
         return block_id
     
-    def _read_block(self, block_id: str) -> bytes: # Lee un bloque de datos
+    def _read_block(self, block_id: str) -> bytes:  # Lee un bloque de datos
         block_path = os.path.join(self.data_dir, f"{block_id}.block")
         
         with open(block_path, 'rb') as f:
@@ -87,7 +87,24 @@ class COWFS: # Librería de Copy-On-Write
         
         return metadata.get("versions", [])
     
-    def create(self, filename: str) -> bool: # Crea un nuevo archivo vacío
+    def export_to_txt(self, filename: str, output_path: str) -> bool:
+        """Exporta el contenido de un archivo del sistema COWFS a un archivo .txt en el sistema operativo."""
+        try:
+            content = self.read(filename).decode('utf-8')
+            
+            with open(output_path, 'w', encoding='utf-8') as f:
+                f.write(content)
+            
+            print(f"El archivo '{filename}' se exportó correctamente a '{output_path}'.")
+            return True
+        except FileNotFoundError:
+            print(f"El archivo '{filename}' no existe en el sistema COWFS.")
+            return False
+        except Exception as e:
+            print(f"Error al exportar el archivo '{filename}': {e}")
+            return False
+
+    def create(self, filename: str) -> bool:  # Crea un nuevo archivo vacío
         metadata_path = os.path.join(self.metadata_dir, f"{filename}.json")
         os.makedirs(self.metadata_dir, exist_ok=True)
         
@@ -108,15 +125,19 @@ class COWFS: # Librería de Copy-On-Write
         
         return True
     
-    def open(self, filename: str) -> bool: # Abre un archivo existente
+    def open(self, filename: str) -> bool:  # Abre un archivo existente
         metadata_path = os.path.join(self.metadata_dir, f"{filename}.json")
         
         if not os.path.exists(metadata_path):
             return False  # El archivo no existe
         
-        with open(metadata_path, 'r') as f:
-            metadata = json.load(f)
-        
+        try:
+            with open(metadata_path, 'r') as f:
+                metadata = json.load(f)
+        except json.JSONDecodeError:
+            print(f"⚠️ Error: El archivo de metadatos '{metadata_path}' está corrupto.")
+            return False
+
         self.open_files[filename] = {
             "metadata": metadata,
             "position": 0
@@ -124,7 +145,7 @@ class COWFS: # Librería de Copy-On-Write
         
         return True
     
-    def close(self, filename: str) -> bool: # Cierra un archivo
+    def close(self, filename: str) -> bool:  # Cierra un archivo
         if filename not in self.open_files:
             return False
         
@@ -135,60 +156,66 @@ class COWFS: # Librería de Copy-On-Write
     def write(self, filename: str, data: bytes) -> int:
         if filename not in self.open_files:
             return -1
-        
+
         file_info = self.open_files[filename]
         metadata = file_info["metadata"]
         position = file_info["position"]
-        
+
         current_version_idx = metadata["current_version"]
         if current_version_idx < 0:
             current_version = {"blocks": [], "size": 0}
         else:
             current_version = metadata["versions"][current_version_idx]
-        
+
         new_size = max(position + len(data), current_version["size"])
         new_blocks = list(current_version["blocks"])
-        
+
         # Si hay un bloque parcial, completarlo primero
         if new_blocks:
             last_block_id = new_blocks[-1]
             last_block_data = self._read_block(last_block_id)
-            
+
             if len(last_block_data) < self.block_size:
                 remaining_space = self.block_size - len(last_block_data)
                 to_write = data[:remaining_space]
                 updated_block_data = last_block_data + to_write
-                
+
                 # Sobrescribir el bloque con los datos actualizados
                 block_path = os.path.join(self.data_dir, f"{last_block_id}.block")
                 with open(block_path, 'wb') as f:
                     f.write(updated_block_data)
-                
+
                 data = data[remaining_space:]
-        
+
         # Escribir los datos restantes en nuevos bloques
         while data:
             write_size = min(len(data), self.block_size)
             block_id = self._write_block(data[:write_size])
             new_blocks.append(block_id)
             data = data[write_size:]
-        
+
+        # Calcular el rango de bytes para la nueva versión
+        start = current_version["size"]
+        end = new_size
+
         # Actualizar metadatos del archivo
         metadata["versions"].append({
             "version": len(metadata["versions"]),
             "timestamp": datetime.now().isoformat(),
             "blocks": new_blocks,
+            "start": start,
+            "end": end,
             "size": new_size
         })
         metadata["current_version"] = len(metadata["versions"]) - 1
         metadata["size"] = new_size
         metadata["blocks"] = new_blocks
-        
+
         with open(os.path.join(self.metadata_dir, f"{filename}.json"), 'w') as f:
             json.dump(metadata, f, indent=2)
-        
+
         file_info["position"] = new_size
-        
+
         return len(data)
     
     def undo(self, filename: str) -> bool:
@@ -208,23 +235,6 @@ class COWFS: # Librería de Copy-On-Write
             json.dump(metadata, f, indent=2)
         
         return True
-    
-    def export_to_txt(self, filename: str, output_path: str) -> bool:
-        """Exporta el contenido de un archivo del sistema COWFS a un archivo .txt en el sistema operativo."""
-        try:
-            content = self.read(filename).decode('utf-8')
-            
-            with open(output_path, 'w', encoding='utf-8') as f:
-                f.write(content)
-            
-            print(f"El archivo '{filename}' se exportó correctamente a '{output_path}'.")
-            return True
-        except FileNotFoundError:
-            print(f"El archivo '{filename}' no existe en el sistema COWFS.")
-            return False
-        except Exception as e:
-            print(f"Error al exportar el archivo '{filename}': {e}")
-            return False
 
     def get_block_size(self, block_id: str) -> int:
         """
@@ -262,4 +272,3 @@ class COWFS: # Librería de Copy-On-Write
             print("✅ Todos los metadatos han sido eliminados.")
         else:
             print("⚠️ No se encontró el directorio de metadatos.")
-
