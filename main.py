@@ -50,12 +50,14 @@ def main():
     cow = COWFS()
 
     # Opcional: Eliminar bloques existentes
-    # cow.delete_blocks()
+    cow.delete_blocks()
 
     # Opcional: Eliminar metadatos existentes
-    # cow.delete_metadata()
+    cow.delete_metadata()
 
-    filename = "mi_archivo.txt"
+    filename = "corni"
+
+    
 
     # Crear el archivo si no existe
     if cow.create(filename):
@@ -99,6 +101,21 @@ def main():
         print(f"Archivo exportado correctamente en: {output_path}")
     else:
         print("Error al exportar el archivo.")
+
+    # Preguntar al usuario qué versión desea consultar
+    while True:
+        try:
+            version = int(input("\n🔍 Ingresa el número de la versión que deseas consultar (o -1 para salir): "))
+            if version == -1:
+                break
+
+            contenido_version = obtener_contenido_version(cow, filename, version)
+            if contenido_version is not None:
+                print(f"\n📜 Contenido de la versión {version}:\n{contenido_version.decode()}")
+            else:
+                print(f"⚠️ No se pudo obtener el contenido de la versión {version}.")
+        except ValueError:
+            print("⚠️ Por favor, ingresa un número válido.")
 
 if __name__ == "__main__":
     main()
