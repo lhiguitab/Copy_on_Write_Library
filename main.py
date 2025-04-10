@@ -57,20 +57,17 @@ def main():
 
     filename = "corni"
 
-    
-
     # Crear el archivo si no existe
-    if cow.create(filename):
-        print(f"Archivo '{filename}' creado exitosamente.")
-    else:
-        print(f"El archivo '{filename}' ya existe.")
+    if not cow.create(filename):
+        print(f"⚠️ El archivo '{filename}' ya existe o no se pudo crear.")
+        return
 
     # Abrir el archivo para escritura
-    if cow.open(filename):
-        print(f"Archivo '{filename}' abierto para escritura.")
-    else:
-        print(f"Error al abrir el archivo '{filename}'.")
+    if not cow.open(filename):
+        print(f"⚠️ Error al abrir el archivo '{filename}'.")
         return
+
+    print(f"Archivo '{filename}' abierto para escritura.")
 
     # Permitir que el usuario escriba en el archivo
     while True:
@@ -94,6 +91,12 @@ def main():
     # Cerrar el archivo
     cow.close(filename)
     print(f"Archivo '{filename}' cerrado.")
+
+    memory_usage = cow.get_memory_usage()
+    print("\n📊 Uso actual de memoria:")
+    print(f"  Tamaño total de bloques: {memory_usage['total_blocks_size']} bytes")
+    print(f"  Tamaño total de metadatos: {memory_usage['total_metadata_size']} bytes")
+    print(f"  Tamaño total: {memory_usage['total_size']} bytes")
 
     # Exportar el archivo a un archivo .txt
     output_path = os.path.join(os.getcwd(), "mi_archivo_exportado.txt")

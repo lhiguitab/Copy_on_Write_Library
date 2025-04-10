@@ -16,17 +16,26 @@ class COWFS:  # Librería de Copy-On-Write
         # Aseguramos que existan los directorios necesarios
         self.data_dir = os.path.join(self.base_dir, "data")
         self.metadata_dir = os.path.join(self.base_dir, "metadata")
+        self.log_path = os.path.join(self.base_dir, "cowfs.log")  # Ruta del archivo de log
         
         # Crear los directorios si no existen
         os.makedirs(self.data_dir, exist_ok=True)
         os.makedirs(self.metadata_dir, exist_ok=True)
         
-        # Diccionario para mantener los archivos abiertos y su información
-        self.open_files = {}
+        # Crear el archivo de log si no existe
+        if not os.path.exists(self.log_path):
+            with open(self.log_path, 'w') as f:
+                f.write("COWFS Log File\n")
+                f.write("=====================\n")
         
-        # Tamaño del bloque para fragmentar archivos (4KB por defecto)
-        self.block_size = 4 * 1024
+        self.open_files = {}
     
+    def _log_event(self, event: str):
+        """Registra un evento en el archivo de log."""
+        timestamp = datetime.now().isoformat()
+        with open(self.log_path, 'a') as f:
+            f.write(f"[{timestamp}] {event}\n")
+
     def _write_block(self, data: bytes) -> str:  # Escribe un bloque de datos y devuelve su ID
         block_id = str(uuid.uuid4())
         block_path = os.path.join(self.data_dir, f"{block_id}.block")
@@ -43,21 +52,30 @@ class COWFS:  # Librería de Copy-On-Write
             return f.read()
     
     def read(self, filename: str) -> bytes:
-        """Lee el contenido del archivo reconstruyéndolo a partir de sus bloques."""
+        """Lee el contenido del archivo reconstruyéndolo a partir de la última versión."""
         metadata_path = os.path.join(self.metadata_dir, f"{filename}.json")
         
+        # Verificar si el archivo de metadatos existe
         if not os.path.exists(metadata_path):
             raise FileNotFoundError(f"El archivo '{filename}' no existe en el sistema.")
 
+        # Leer los metadatos del archivo
         with open(metadata_path, 'r') as f:
             metadata = json.load(f)
         
+        # Verificar si hay versiones disponibles
         if metadata["current_version"] < 0:
+            print(f"⚠️ El archivo '{filename}' no tiene contenido (sin versiones).")
             return b""  # No hay contenido en el archivo aún
         
+        # Obtener la información de la última versión
         version_info = metadata["versions"][metadata["current_version"]]
-        file_content = b"".join(self._read_block(block) for block in version_info["blocks"])
+        blocks = version_info["blocks"]
 
+        # Reconstruir el contenido del archivo a partir de los bloques
+        file_content = b"".join(self._read_block(block) for block in blocks)
+
+        print(f"✅ Contenido del archivo '{filename}' leído correctamente (versión {metadata['current_version']}).")
         return file_content
     
     def list_blocks(self) -> List[str]:
@@ -104,19 +122,24 @@ class COWFS:  # Librería de Copy-On-Write
             print(f"Error al exportar el archivo '{filename}': {e}")
             return False
 
-    def create(self, filename: str) -> bool:
-        """
-        Crea un nuevo archivo vacío en el sistema COWFS.
-        Genera un archivo de metadatos (.json) y un archivo base (.txt).
-        """
+    def create(self, filename: str, overwrite: bool = False) -> bool:
         metadata_path = os.path.join(self.metadata_dir, f"{filename}.json")
         txt_path = os.path.join(self.base_dir, f"{filename}.txt")  # Ruta del archivo base .txt
         os.makedirs(self.metadata_dir, exist_ok=True)
 
         # Verificar si el archivo ya existe
         if os.path.exists(metadata_path) or os.path.exists(txt_path):
-            print(f"⚠️ El archivo '{filename}' ya existe.")
-            return False  # El archivo ya existe
+            if not overwrite:
+                self._log_event(f"Intento fallido de crear el archivo '{filename}': ya existe.")
+                print(f"⚠️ El archivo '{filename}' ya existe.")
+                return False  # El archivo ya existe
+            else:
+                # Eliminar los archivos existentes si se permite sobrescribir
+                if os.path.exists(metadata_path):
+                    os.remove(metadata_path)
+                if os.path.exists(txt_path):
+                    os.remove(txt_path)
+                self._log_event(f"Archivos existentes para '{filename}' eliminados para sobrescribir.")
 
         # Crear los metadatos iniciales
         metadata = {
@@ -129,100 +152,49 @@ class COWFS:  # Librería de Copy-On-Write
         }
 
         # Guardar los metadatos en un archivo .json
-        with open(metadata_path, 'w') as f:
-            json.dump(metadata, f, indent=2)
+        try:
+            with open(metadata_path, 'w') as f:
+                json.dump(metadata, f, indent=2)
+        except Exception as e:
+            print(f"⚠️ Error al crear el archivo de metadatos '{metadata_path}': {e}")
+            return False
 
         # Crear un archivo base .txt vacío
-        with open(txt_path, 'w', encoding='utf-8') as f:
-            f.write("")  # Archivo vacío
+        try:
+            with open(txt_path, 'w', encoding='utf-8') as f:
+                f.write("")  # Archivo vacío
+        except Exception as e:
+            print(f"⚠️ Error al crear el archivo base '{txt_path}': {e}")
+            return False
 
+        self._log_event(f"Archivo '{filename}' creado exitosamente.")
         print(f"✅ Archivo '{filename}' creado exitosamente con su archivo base y metadatos.")
         return True
     
     def open(self, filename: str, file_path: str = None) -> bool:
-        """
-        Abre un archivo existente en el sistema COWFS o un archivo externo especificando su ruta.
-        Si es un archivo externo, lo registra como la versión 0 en el sistema.
-        :param filename: Nombre del archivo en el sistema COWFS.
-        :param file_path: Ruta completa de un archivo externo (opcional).
-        :return: True si el archivo se abre correctamente, False en caso contrario.
-        """
-        if file_path:
-            # Intentar abrir un archivo externo
-            if not os.path.exists(file_path):
-                print(f"⚠️ El archivo en la ruta '{file_path}' no existe.")
-                return False
+        metadata_path = os.path.join(self.metadata_dir, f"{filename}.json")
 
-            try:
-                # Leer el contenido del archivo externo
-                with open(file_path, 'rb') as f:
-                    content = f.read()
+        if not os.path.exists(metadata_path):
+            print(f"⚠️ El archivo '{filename}' no existe en el sistema COWFS.")
+            return False
 
-                # Dividir el contenido en bloques y almacenarlos
-                blocks = []
-                while content:
-                    write_size = min(len(content), self.block_size)
-                    block_id = self._write_block(content[:write_size])
-                    blocks.append(block_id)
-                    content = content[write_size:]
+        try:
+            with open(metadata_path, 'r') as f:
+                metadata = json.load(f)
+        except json.JSONDecodeError:
+            print(f"⚠️ Error: El archivo de metadatos '{metadata_path}' está corrupto.")
+            return False
+        except Exception as e:
+            print(f"⚠️ Error al abrir el archivo de metadatos '{metadata_path}': {e}")
+            return False
 
-                # Crear los metadatos iniciales para el archivo externo
-                metadata_path = os.path.join(self.metadata_dir, f"{filename}.json")
-                metadata = {
-                    "filename": filename,
-                    "creation_time": datetime.now().isoformat(),
-                    "versions": [
-                        {
-                            "version": 0,
-                            "timestamp": datetime.now().isoformat(),
-                            "blocks": blocks,
-                            "start": 0,
-                            "end": sum(self.get_block_size(block) for block in blocks),
-                            "size": sum(self.get_block_size(block) for block in blocks)
-                        }
-                    ],
-                    "current_version": 0,
-                    "size": sum(self.get_block_size(block) for block in blocks),
-                    "blocks": blocks
-                }
+        self.open_files[filename] = {
+            "metadata": metadata,
+            "position": metadata["size"]
+        }
 
-                # Guardar los metadatos en un archivo .json
-                with open(metadata_path, 'w') as f:
-                    json.dump(metadata, f, indent=2)
-
-                # Registrar el archivo como abierto
-                self.open_files[filename] = {
-                    "metadata": metadata,
-                    "position": metadata["size"]
-                }
-
-                print(f"✅ Archivo externo '{file_path}' registrado como '{filename}' en el sistema COWFS.")
-                return True
-            except Exception as e:
-                print(f"⚠️ Error al abrir el archivo externo '{file_path}': {e}")
-                return False
-        else:
-            # Abrir un archivo en el sistema COWFS
-            metadata_path = os.path.join(self.metadata_dir, f"{filename}.json")
-
-            if not os.path.exists(metadata_path):
-                print(f"⚠️ El archivo '{filename}' no existe en el sistema COWFS.")
-                return False
-
-            try:
-                with open(metadata_path, 'r') as f:
-                    metadata = json.load(f)
-            except json.JSONDecodeError:
-                print(f"⚠️ Error: El archivo de metadatos '{metadata_path}' está corrupto.")
-                return False
-
-            self.open_files[filename] = {
-                "metadata": metadata,
-                "position": metadata["size"]
-            }
-
-            print(f"✅ Archivo '{filename}' abierto correctamente en el sistema COWFS.")
-            return True
+        print(f"✅ Archivo '{filename}' abierto correctamente en el sistema COWFS.")
+        return True
     
     def close(self, filename: str) -> bool:  # Cierra un archivo
         if filename not in self.open_files:
@@ -234,6 +206,7 @@ class COWFS:  # Librería de Copy-On-Write
     
     def write(self, filename: str, data: bytes) -> int:
         if filename not in self.open_files:
+            self._log_event(f"Intento fallido de escribir en el archivo '{filename}': no está abierto.")
             return -1
 
         file_info = self.open_files[filename]
@@ -295,24 +268,28 @@ class COWFS:  # Librería de Copy-On-Write
 
         file_info["position"] = new_size
 
+        self._log_event(f"Datos escritos en el archivo '{filename}'. Nueva versión: {metadata['current_version']}.")
         return len(data)
     
     def undo(self, filename: str) -> bool:
         if filename not in self.open_files:
+            self._log_event(f"Intento fallido de deshacer cambios en el archivo '{filename}': no está abierto.")
             return False
-        
+
         file_info = self.open_files[filename]
         metadata = file_info["metadata"]
-        
+
         if metadata["current_version"] <= 0:
+            self._log_event(f"Intento fallido de deshacer cambios en el archivo '{filename}': no hay versiones anteriores.")
             return False
-        
+
         metadata["current_version"] -= 1
         metadata["size"] = metadata["versions"][metadata["current_version"]]["size"]
-        
+
         with open(os.path.join(self.metadata_dir, f"{filename}.json"), 'w') as f:
             json.dump(metadata, f, indent=2)
-        
+
+        self._log_event(f"Se deshicieron los cambios en el archivo '{filename}'. Versión actual: {metadata['current_version']}.")
         return True
 
     def get_block_size(self, block_id: str) -> int:
@@ -351,3 +328,32 @@ class COWFS:  # Librería de Copy-On-Write
             print("✅ Todos los metadatos han sido eliminados.")
         else:
             print("⚠️ No se encontró el directorio de metadatos.")
+
+    def get_memory_usage(self) -> Dict[str, int]:
+        """
+        Calcula el uso actual de memoria de la biblioteca.
+        :return: Un diccionario con el tamaño total de los bloques y los metadatos en bytes.
+        """
+        total_blocks_size = 0
+        total_metadata_size = 0
+
+        # Calcular el tamaño total de los bloques en el directorio 'data'
+        if os.path.exists(self.data_dir):
+            for block_file in os.listdir(self.data_dir):
+                block_path = os.path.join(self.data_dir, block_file)
+                if os.path.isfile(block_path):
+                    total_blocks_size += os.path.getsize(block_path)
+
+        # Calcular el tamaño total de los archivos de metadatos en el directorio 'metadata'
+        if os.path.exists(self.metadata_dir):
+            for metadata_file in os.listdir(self.metadata_dir):
+                metadata_path = os.path.join(self.metadata_dir, metadata_file)
+                if os.path.isfile(metadata_path):
+                    total_metadata_size += os.path.getsize(metadata_path)
+
+        # Retornar el uso de memoria en un diccionario
+        return {
+            "total_blocks_size": total_blocks_size,
+            "total_metadata_size": total_metadata_size,
+            "total_size": total_blocks_size + total_metadata_size
+        }
