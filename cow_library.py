@@ -80,7 +80,7 @@ class COWFS:  # Librería de Copy-On-Write
         end = current_version["end"]
 
         # Reconstruir el contenido a partir de los bloques
-        content = b""
+        content_parts = []  # Usar una lista para almacenar los datos de los bloques
         current_position = 0
         for block_id in blocks:
             block_path = os.path.join(self.data_dir, f"{block_id}.block")
@@ -89,13 +89,14 @@ class COWFS:  # Librería de Copy-On-Write
                     block_data = block_file.read()
                     block_start = max(0, start - current_position)
                     block_end = min(len(block_data), end - current_position)
-                    content += block_data[block_start:block_end]
+                    content_parts.append(block_data[block_start:block_end])
                     current_position += len(block_data)
             else:
                 print(f"⚠️ El bloque '{block_id}' no existe.")
                 return b""
 
-        return content
+        # Unir las partes al final para minimizar la copia de datos
+        return b"".join(content_parts)
     
     def list_blocks(self) -> List[str]:
         """Lista todos los bloques almacenados en el sistema de archivos."""

@@ -1,6 +1,7 @@
 from cow_library import COWFS
 import os
 import json
+import time
 
 def obtener_contenido_version(cow, filename, version):
     """Obtiene el contenido de una versión específica de un archivo."""
@@ -134,5 +135,12 @@ def main():
         except ValueError:
             print("⚠️ Por favor, ingresa un número válido.")
 
+    # Leer un archivo grande con la versión original
+    start_time = time.time()
+    contenido = cow.read("archivo_grande")
+    end_time = time.time()
+    print(f"Tiempo de lectura (original): {end_time - start_time:.2f} segundos")
+
+    
 if __name__ == "__main__":
     main()
