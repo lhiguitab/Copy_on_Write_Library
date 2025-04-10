@@ -28,7 +28,11 @@ class COWFS:  # Librería de Copy-On-Write
                 f.write("COWFS Log File\n")
                 f.write("=====================\n")
         
+        # Inicializar el diccionario para rastrear archivos abiertos
         self.open_files = {}
+
+        # Tamaño del bloque (por defecto 4 KB)
+        self.block_size = 4 * 1024  # 4 KB
     
     def _log_event(self, event: str):
         """Registra un evento en el archivo de log."""
@@ -127,18 +131,29 @@ class COWFS:  # Librería de Copy-On-Write
         txt_path = os.path.join(self.base_dir, f"{filename}.txt")  # Ruta del archivo base .txt
         os.makedirs(self.metadata_dir, exist_ok=True)
 
-        # Verificar si el archivo ya existe
-        if os.path.exists(metadata_path) or os.path.exists(txt_path):
+        # Verificar si el archivo base ya existe
+        if os.path.exists(txt_path):
             if not overwrite:
-                self._log_event(f"Intento fallido de crear el archivo '{filename}': ya existe.")
-                print(f"⚠️ El archivo '{filename}' ya existe.")
-                return False  # El archivo ya existe
+                print(f"⚠️ El archivo base '{txt_path}' ya existe. No se sobrescribirá.")
+                # Verificar si el archivo de metadatos falta y recrearlo si es necesario
+                if not os.path.exists(metadata_path):
+                    print(f"⚠️ El archivo de metadatos '{metadata_path}' falta. Recreándolo...")
+                    metadata = {
+                        "filename": filename,
+                        "creation_time": datetime.now().isoformat(),
+                        "versions": [],
+                        "current_version": -1,
+                        "size": 0,
+                        "blocks": []
+                    }
+                    with open(metadata_path, 'w') as f:
+                        json.dump(metadata, f, indent=2)
+                return True  # El archivo ya existe, no es un error
             else:
                 # Eliminar los archivos existentes si se permite sobrescribir
                 if os.path.exists(metadata_path):
                     os.remove(metadata_path)
-                if os.path.exists(txt_path):
-                    os.remove(txt_path)
+                os.remove(txt_path)
                 self._log_event(f"Archivos existentes para '{filename}' eliminados para sobrescribir.")
 
         # Crear los metadatos iniciales

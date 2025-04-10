@@ -50,10 +50,10 @@ def main():
     cow = COWFS()
 
     # Opcional: Eliminar bloques existentes
-    cow.delete_blocks()
+    # cow.delete_blocks()
 
     # Opcional: Eliminar metadatos existentes
-    cow.delete_metadata()
+    # cow.delete_metadata()
 
     filename = "corni"
 

@@ -6,3 +6,12 @@ COWFS Log File
 [2025-04-08T21:28:14.369752] Intento fallido de crear el archivo 'corni': ya existe.
 [2025-04-09T19:39:20.072440] Intento fallido de crear el archivo 'corni': ya existe.
 [2025-04-09T19:47:17.492603] Intento fallido de crear el archivo 'corni': ya existe.
+[2025-04-09T20:07:42.652733] Intento fallido de crear el archivo 'corni': ya existe.
+[2025-04-09T20:07:53.006627] Archivo 'corni' creado exitosamente.
+[2025-04-09T20:12:33.079528] Intento fallido de crear el archivo 'corni': ya existe.
+[2025-04-09T20:20:28.693881] Datos escritos en el archivo 'corni'. Nueva versión: 0.
+[2025-04-09T20:20:34.012230] Datos escritos en el archivo 'corni'. Nueva versión: 1.
+[2025-04-09T20:33:26.550743] Datos escritos en el archivo 'corni'. Nueva versión: 0.
+[2025-04-09T20:33:30.007945] Datos escritos en el archivo 'corni'. Nueva versión: 1.
+[2025-04-09T20:33:47.711222] Datos escritos en el archivo 'corni'. Nueva versión: 2.
+[2025-04-09T20:33:49.936054] Datos escritos en el archivo 'corni'. Nueva versión: 3.
