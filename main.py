@@ -50,24 +50,31 @@ def main():
     cow = COWFS()
 
     # Opcional: Eliminar bloques existentes
-    # cow.delete_blocks()
+    cow.delete_blocks()
 
     # Opcional: Eliminar metadatos existentes
-    # cow.delete_metadata()
+    cow.delete_metadata()
 
     filename = "corni"
+    file_path = "C:\\Users\\marti\\Downloads\\Componentes SmartCV.png"
+    #"C:\\Users\\marti\\OneDrive\\Documentos\\Universidad EAFIT\\SEMESTRE IV\\Operative Systems\\TEXTO DE 4096 BYTES.docx"
+
 
     # Crear el archivo si no existe
-    if not cow.create(filename):
-        print(f"⚠️ El archivo '{filename}' ya existe o no se pudo crear.")
-        return
+    #if not cow.create(filename):
+       # print(f"⚠️ El archivo '{filename}' ya existe o no se pudo crear.")
+        #return
 
     # Abrir el archivo para escritura
-    if not cow.open(filename):
+    if not cow.open(filename,file_path= file_path):
         print(f"⚠️ Error al abrir el archivo '{filename}'.")
         return
 
     print(f"Archivo '{filename}' abierto para escritura.")
+
+    # Leer el contenido inicial del archivo
+    contenido = cow.read(filename)
+    print(f"\n📂 Contenido inicial del archivo:\n{contenido.decode(errors='replace')}")
 
     # Permitir que el usuario escriba en el archivo
     while True:
@@ -79,7 +86,14 @@ def main():
 
     # Leer el contenido del archivo
     contenido = cow.read(filename)
-    print(f"\n📂 Contenido actual del archivo:\n{contenido.decode()}")
+
+    try:
+        # Intentar decodificar como texto UTF-8
+        print(f"\n📂 Contenido actual del archivo:\n{contenido.decode('utf-8')}")
+    except UnicodeDecodeError:
+        # Si no se puede decodificar, manejarlo como binario
+        print("\n📂 Contenido actual del archivo (binario):")
+        print(contenido)  # Mostrar los primeros 100 bytes como ejemplo
 
     # Listar los bloques almacenados
     print("\n📦 Bloques almacenados en el sistema:")

@@ -1,17 +1,21 @@
 COWFS Log File
 =====================
-[2025-04-08T21:17:58.625897] Archivo 'corni' creado exitosamente.
-[2025-04-08T21:19:36.868376] Intento fallido de crear el archivo 'corni': ya existe.
-[2025-04-08T21:22:45.609023] Intento fallido de crear el archivo 'corni': ya existe.
-[2025-04-08T21:28:14.369752] Intento fallido de crear el archivo 'corni': ya existe.
-[2025-04-09T19:39:20.072440] Intento fallido de crear el archivo 'corni': ya existe.
-[2025-04-09T19:47:17.492603] Intento fallido de crear el archivo 'corni': ya existe.
-[2025-04-09T20:07:42.652733] Intento fallido de crear el archivo 'corni': ya existe.
-[2025-04-09T20:07:53.006627] Archivo 'corni' creado exitosamente.
-[2025-04-09T20:12:33.079528] Intento fallido de crear el archivo 'corni': ya existe.
-[2025-04-09T20:20:28.693881] Datos escritos en el archivo 'corni'. Nueva versión: 0.
-[2025-04-09T20:20:34.012230] Datos escritos en el archivo 'corni'. Nueva versión: 1.
-[2025-04-09T20:33:26.550743] Datos escritos en el archivo 'corni'. Nueva versión: 0.
-[2025-04-09T20:33:30.007945] Datos escritos en el archivo 'corni'. Nueva versión: 1.
-[2025-04-09T20:33:47.711222] Datos escritos en el archivo 'corni'. Nueva versión: 2.
-[2025-04-09T20:33:49.936054] Datos escritos en el archivo 'corni'. Nueva versión: 3.
+[2025-04-09T22:11:10.181087] Datos escritos en el archivo 'corni'. Nueva versión: 0.
+[2025-04-09T22:11:29.662025] Datos escritos en el archivo 'corni'. Nueva versión: 1.
+[2025-04-09T23:02:12.934394] Datos escritos en el archivo 'corni'. Nueva versión: 1.
+[2025-04-09T23:02:50.644701] Datos escritos en el archivo 'corni'. Nueva versión: 2.
+[2025-04-09T23:02:54.286592] Datos escritos en el archivo 'corni'. Nueva versión: 3.
+[2025-04-09T23:02:58.179965] Datos escritos en el archivo 'corni'. Nueva versión: 4.
+[2025-04-09T23:03:05.583919] Datos escritos en el archivo 'corni'. Nueva versión: 5.
+[2025-04-09T23:03:08.451747] Datos escritos en el archivo 'corni'. Nueva versión: 6.
+[2025-04-09T23:03:09.950753] Datos escritos en el archivo 'corni'. Nueva versión: 7.
+[2025-04-09T23:03:11.919653] Datos escritos en el archivo 'corni'. Nueva versión: 8.
+[2025-04-09T23:06:10.103303] Datos escritos en el archivo 'corni'. Nueva versión: 1.
+[2025-04-09T23:07:15.091374] Datos escritos en el archivo 'corni'. Nueva versión: 2.
+[2025-04-09T23:15:05.081017] Datos escritos en el archivo 'corni'. Nueva versión: 1.
+[2025-04-09T23:15:07.973942] Datos escritos en el archivo 'corni'. Nueva versión: 2.
+[2025-04-09T23:15:09.347133] Datos escritos en el archivo 'corni'. Nueva versión: 3.
+[2025-04-09T23:16:18.286044] Datos escritos en el archivo 'corni'. Nueva versión: 1.
+[2025-04-09T23:16:19.320884] Datos escritos en el archivo 'corni'. Nueva versión: 2.
+[2025-04-09T23:16:20.772508] Datos escritos en el archivo 'corni'. Nueva versión: 3.
+[2025-04-09T23:16:23.156009] Datos escritos en el archivo 'corni'. Nueva versión: 4.
