@@ -51,23 +51,23 @@ def main():
     cow = COWFS()
 
     # Opcional: Eliminar bloques existentes
-    cow.delete_blocks()
+    # cow.delete_blocks()
 
     # Opcional: Eliminar metadatos existentes
-    cow.delete_metadata()
+    # cow.delete_metadata()
 
     filename = "corni"
-    file_path = "C:\\Users\\marti\\Downloads\\Componentes SmartCV.png"
+    # file_path = "C:\\Users\\marti\\Downloads\\Componentes SmartCV.png"
     #"C:\\Users\\marti\\OneDrive\\Documentos\\Universidad EAFIT\\SEMESTRE IV\\Operative Systems\\TEXTO DE 4096 BYTES.docx"
 
 
     # Crear el archivo si no existe
-    #if not cow.create(filename):
-       # print(f"⚠️ El archivo '{filename}' ya existe o no se pudo crear.")
-        #return
+    if not cow.create(filename):
+       print(f"⚠️ El archivo '{filename}' ya existe o no se pudo crear.")
+       return
 
     # Abrir el archivo para escritura
-    if not cow.open(filename,file_path= file_path):
+    if not cow.open(filename):
         print(f"⚠️ Error al abrir el archivo '{filename}'.")
         return
 
@@ -112,6 +112,15 @@ def main():
     print(f"  Tamaño total de bloques: {memory_usage['total_blocks_size']} bytes")
     print(f"  Tamaño total de metadatos: {memory_usage['total_metadata_size']} bytes")
     print(f"  Tamaño total: {memory_usage['total_size']} bytes")
+
+    # Mostrar el rendimiento del sistema
+    performance = cow.get_system_performance()
+    print("\n📊 Rendimiento del sistema:")
+    print(f"  Memoria total: {performance['total_memory']:.2f} GB")
+    print(f"  Memoria usada: {performance['used_memory']:.2f} GB")
+    print(f"  Memoria disponible: {performance['available_memory']:.2f} GB")
+    print(f"  Porcentaje de uso de memoria: {performance['memory_usage_percent']:.2f}%")
+    print(f"  Porcentaje de uso de CPU: {performance['cpu_usage_percent']:.2f}%")
 
     # Exportar el archivo a un archivo .txt
     output_path = os.path.join(os.getcwd(), "mi_archivo_exportado.txt")
